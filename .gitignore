@@ -361,3 +361,37 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# ===================================================================
+# Security, Secrets, Certificates & Sensitive Environment Files
+# ===================================================================
+appsettings.Production.json
+appsettings.*.local.json
+appsettings.secrets.json
+secrets.json
+*.secrets.json
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cer
+*.crt
+*.pfx
+*.p12
+
+# IDE & Tooling Configs
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.gemini/
+.agents/
+
+# Local SQLite / Test Databases
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal

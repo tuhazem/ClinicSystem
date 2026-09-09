@@ -1,4 +1,4 @@
-﻿using ClinicSystem.Domain.Patients;
+using ClinicSystem.Domain.Patients;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -15,6 +15,8 @@ public class PatientConfiguration : IEntityTypeConfiguration<Patient>
         builder.ToTable("Patients");
 
         builder.HasKey(p => p.Id);
+
+        builder.Ignore(p => p.DomainEvents);
 
         builder.Property(p => p.FullName)
             .HasMaxLength(150)

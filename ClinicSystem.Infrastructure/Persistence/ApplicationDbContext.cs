@@ -1,29 +1,33 @@
-﻿using ClinicSystem.Domain.Patients;
+using ClinicSystem.Application.Common.Interfaces;
+using ClinicSystem.Domain.Appointments;
+using ClinicSystem.Domain.Billing;
+using ClinicSystem.Domain.Doctors;
+using ClinicSystem.Domain.MedicalRecords;
+using ClinicSystem.Domain.Patients;
+using ClinicSystem.Domain.Services;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ClinicSystem.Infrastructure.Persistence
+namespace ClinicSystem.Infrastructure.Persistence;
+
+public class ApplicationDbContext : DbContext, IUnitOfWork
 {
-    public class ApplicationDbContext : DbContext
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options): base(options)
-        {
-            
-        }
+    }
 
-        public DbSet<Patient> Patients => Set<Patient>();
+    public DbSet<Patient> Patients => Set<Patient>();
+    public DbSet<Doctor> Doctors => Set<Doctor>();
+    public DbSet<Appointment> Appointments => Set<Appointment>();
+    public DbSet<MedicalService> MedicalServices => Set<MedicalService>();
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<InvoiceItem> InvoiceItems => Set<InvoiceItem>();
+    public DbSet<ConsultationRecord> ConsultationRecords => Set<ConsultationRecord>();
+    public DbSet<PrescriptionItem> PrescriptionItems => Set<PrescriptionItem>();
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
-            // Applies all IEntityTypeConfiguration classes in this assembly automatically
-            modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-        }
-
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
     }
 }

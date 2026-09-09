@@ -1,6 +1,181 @@
-@ClinicSystem.Api_HostAddress = http://localhost:5203
+@ClinicSystem.Api_HostAddress = https://localhost:7198
 
-GET {{ClinicSystem.Api_HostAddress}}/weatherforecast/
+### ===================================================
+### 1. PATIENTS MODULE
+### ===================================================
+
+### Register Patient
+POST {{ClinicSystem.Api_HostAddress}}/api/patients
+Content-Type: application/json
+
+{
+  "fullName": "Sarah Jenkins",
+  "phoneNumber": "+123456789012",
+  "dateOfBirth": "1992-07-24T00:00:00.000Z",
+  "email": "sarah.jenkins@example.com",
+  "address": "452 Elm Street, Springfield"
+}
+
+### Get Patient by ID (Cached)
+@patientId = 00000000-0000-0000-0000-000000000000
+GET {{ClinicSystem.Api_HostAddress}}/api/patients/{{patientId}}
 Accept: application/json
 
-###
+
+### ===================================================
+### 2. DOCTORS MODULE
+### ===================================================
+
+### Register Doctor
+POST {{ClinicSystem.Api_HostAddress}}/api/doctors
+Content-Type: application/json
+
+{
+  "fullName": "Dr. Gregory House",
+  "specialization": 9,
+  "licenseNumber": "DOC-MD-98765",
+  "phoneNumber": "+198765432101",
+  "consultationFee": 150.00,
+  "email": "house.md@princeton-plainsboro.org"
+}
+
+### Get All Doctors (Cached via HybridCache)
+GET {{ClinicSystem.Api_HostAddress}}/api/doctors
+Accept: application/json
+
+### Get Doctor by ID (Cached via HybridCache)
+@doctorId = 00000000-0000-0000-0000-000000000000
+GET {{ClinicSystem.Api_HostAddress}}/api/doctors/{{doctorId}}
+Accept: application/json
+
+
+### ===================================================
+### 3. APPOINTMENTS & QUEUE MANAGEMENT
+### ===================================================
+
+### Book Appointment (Auto Queue Number Assignment)
+POST {{ClinicSystem.Api_HostAddress}}/api/appointments/book
+Content-Type: application/json
+
+{
+  "patientId": "{{patientId}}",
+  "doctorId": "{{doctorId}}",
+  "scheduledStartTimeUtc": "2026-09-15T09:00:00Z",
+  "scheduledEndTimeUtc": "2026-09-15T09:30:00Z",
+  "type": 1,
+  "reasonForVisit": "Persistent fever and headache."
+}
+
+### Get Doctor Schedule / Queue (Cached via HybridCache)
+GET {{ClinicSystem.Api_HostAddress}}/api/appointments/doctor/{{doctorId}}?date=2026-09-15
+Accept: application/json
+
+### Update Appointment Status (Confirmed / InProgress / Completed / Cancelled)
+@appointmentId = 00000000-0000-0000-0000-000000000000
+PATCH {{ClinicSystem.Api_HostAddress}}/api/appointments/{{appointmentId}}/status
+Content-Type: application/json
+
+{
+  "newStatus": 2,
+  "reason": "Confirmed by patient via SMS."
+}
+
+
+### ===================================================
+### 4. MEDICAL SERVICES & PROCEDURES
+### ===================================================
+
+### Create Medical Service
+POST {{ClinicSystem.Api_HostAddress}}/api/services
+Content-Type: application/json
+
+{
+  "code": "SRV-CBC-01",
+  "name": "Complete Blood Count (CBC)",
+  "basePrice": 45.00,
+  "category": "Laboratory",
+  "description": "Standard diagnostic blood count screening."
+}
+
+### Get All Medical Services (Cached via HybridCache)
+GET {{ClinicSystem.Api_HostAddress}}/api/services
+Accept: application/json
+
+
+### ===================================================
+### 5. BILLING & INVOICES
+### ===================================================
+
+### Create Patient Invoice
+POST {{ClinicSystem.Api_HostAddress}}/api/invoices
+Content-Type: application/json
+
+{
+  "patientId": "{{patientId}}",
+  "appointmentId": "{{appointmentId}}",
+  "items": [
+    {
+      "description": "General Medical Consultation",
+      "quantity": 1,
+      "unitPrice": 150.00
+    },
+    {
+      "description": "Complete Blood Count (CBC) Lab Test",
+      "quantity": 1,
+      "unitPrice": 45.00
+    }
+  ]
+}
+
+### Get Patient Invoices (Cached via HybridCache)
+GET {{ClinicSystem.Api_HostAddress}}/api/invoices/patient/{{patientId}}
+Accept: application/json
+
+### Record Invoice Payment
+@invoiceId = 00000000-0000-0000-0000-000000000000
+POST {{ClinicSystem.Api_HostAddress}}/api/invoices/{{invoiceId}}/pay
+Content-Type: application/json
+
+{
+  "amount": 195.00,
+  "paymentMethod": 2
+}
+
+
+### ===================================================
+### 6. ELECTRONIC MEDICAL RECORDS & PRESCRIPTIONS
+### ===================================================
+
+### Record Consultation & Prescriptions
+POST {{ClinicSystem.Api_HostAddress}}/api/consultations
+Content-Type: application/json
+
+{
+  "patientId": "{{patientId}}",
+  "doctorId": "{{doctorId}}",
+  "appointmentId": "{{appointmentId}}",
+  "symptoms": "High grade fever, severe migraine, nausea.",
+  "diagnosis": "Acute Sinusitis with Tension Headache",
+  "treatmentPlan": "5-day antibiotic therapy with adequate hydration and rest.",
+  "notes": "Follow-up required if symptoms persist beyond 5 days.",
+  "prescriptions": [
+    {
+      "medicationName": "Amoxicillin-Clavulanate 625mg",
+      "dosage": "1 tablet",
+      "frequency": "Twice daily after meals",
+      "durationInDays": 5,
+      "instructions": "Complete full course."
+    },
+    {
+      "medicationName": "Paracetamol 500mg",
+      "dosage": "1-2 tablets",
+      "frequency": "Every 6 hours as needed for pain/fever",
+      "durationInDays": 3,
+      "instructions": "Do not exceed 4000mg per day."
+    }
+  ]
+}
+
+### Get Patient Medical Records & Prescriptions (Cached via HybridCache)
+GET {{ClinicSystem.Api_HostAddress}}/api/consultations/patient/{{patientId}}
+Accept: application/json
