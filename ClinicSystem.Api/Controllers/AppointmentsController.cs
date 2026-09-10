@@ -38,6 +38,19 @@ public class AppointmentsController : ApiController
     }
 
     /// <summary>
+    /// Retrieves available, non-overlapping booking slots for a doctor on a given date (cached via HybridCache).
+    /// </summary>
+    [HttpGet("doctor/{doctorId:guid}/available-slots")]
+    [ProducesResponseType(typeof(IReadOnlyList<ClinicSystem.Application.Appointments.Queries.GetDoctorAvailableSlots.AvailableSlotDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAvailableSlots(Guid doctorId, [FromQuery] DateTime? date, CancellationToken cancellationToken)
+    {
+        var targetDate = date ?? DateTime.UtcNow.Date;
+        var result = await Mediator.Send(new ClinicSystem.Application.Appointments.Queries.GetDoctorAvailableSlots.GetDoctorAvailableSlotsQuery(doctorId, targetDate), cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Updates an appointment's status (Confirmed, InProgress, Completed, Cancelled).
     /// </summary>
     [HttpPatch("{id:guid}/status")]

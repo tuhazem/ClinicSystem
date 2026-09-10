@@ -12,6 +12,7 @@ public interface IAppointmentRepository
     Task<IReadOnlyList<Appointment>> GetByDoctorIdAsync(Guid doctorId, DateTime dateUtc, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Appointment>> GetByPatientIdAsync(Guid patientId, CancellationToken cancellationToken = default);
     Task<int> GetNextQueueNumberAsync(Guid doctorId, DateTime dateUtc, CancellationToken cancellationToken = default);
+    Task<bool> HasConflictAsync(Guid doctorId, DateTime startTimeUtc, DateTime endTimeUtc, Guid? excludeAppointmentId = null, CancellationToken cancellationToken = default);
     Task AddAsync(Appointment appointment, CancellationToken cancellationToken = default);
     Task UpdateAsync(Appointment appointment, CancellationToken cancellationToken = default);
 }

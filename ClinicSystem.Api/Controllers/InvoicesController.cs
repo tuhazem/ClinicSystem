@@ -50,6 +50,18 @@ public class InvoicesController : ApiController
         if (!success) return NotFound(new { message = $"Invoice with ID '{id}' not found." });
         return Ok(new { message = "Payment recorded successfully." });
     }
+
+    /// <summary>
+    /// Downloads or streams an official printable PDF receipt/invoice.
+    /// </summary>
+    [HttpGet("{id:guid}/pdf")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetInvoicePdf(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(new ClinicSystem.Application.Billing.Queries.GetInvoicePdf.GetInvoicePdfQuery(id), cancellationToken);
+        return File(result.Content, result.ContentType, result.FileName);
+    }
 }
 
 public record RecordPaymentRequest(decimal Amount, PaymentMethod PaymentMethod);

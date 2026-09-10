@@ -53,6 +53,14 @@ public class AppointmentRepository : IAppointmentRepository
         return count + 1;
     }
 
+    public async Task<bool> HasConflictAsync(Guid doctorId, DateTime startTimeUtc, DateTime endTimeUtc, Guid? excludeAppointmentId = null, CancellationToken cancellationToken = default)
+    {
+        return await _context.Appointments
+            .Where(a => a.DoctorId == doctorId && a.Status != AppointmentStatus.Cancelled)
+            .Where(a => excludeAppointmentId == null || a.Id != excludeAppointmentId)
+            .AnyAsync(a => a.ScheduledStartTimeUtc < endTimeUtc && a.ScheduledEndTimeUtc > startTimeUtc, cancellationToken);
+    }
+
     public async Task AddAsync(Appointment appointment, CancellationToken cancellationToken = default)
     {
         await _context.Appointments.AddAsync(appointment, cancellationToken);

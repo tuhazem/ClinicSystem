@@ -13,6 +13,9 @@ public class Doctor : BaseEntity
     public decimal ConsultationFee { get; private set; }
     public bool IsActive { get; private set; } = true;
 
+    private readonly List<DoctorWorkingSchedule> _workingSchedules = new();
+    public IReadOnlyCollection<DoctorWorkingSchedule> WorkingSchedules => _workingSchedules.AsReadOnly();
+
     private Doctor() { }
 
     public static Doctor Create(
@@ -67,6 +70,31 @@ public class Doctor : BaseEntity
     public void Activate()
     {
         IsActive = true;
+        UpdateModifiedTime();
+    }
+
+    public void AddWorkingSchedule(DayOfWeek dayOfWeek, TimeSpan startTime, TimeSpan endTime, int slotDurationMinutes = 30)
+    {
+        var existing = _workingSchedules.FirstOrDefault(s => s.DayOfWeek == dayOfWeek);
+        if (existing != null)
+        {
+            existing.UpdateSchedule(startTime, endTime, slotDurationMinutes, true);
+        }
+        else
+        {
+            _workingSchedules.Add(DoctorWorkingSchedule.Create(Id, dayOfWeek, startTime, endTime, slotDurationMinutes));
+        }
+        UpdateModifiedTime();
+    }
+
+    public void SetDefaultWeeklySchedule(TimeSpan startTime, TimeSpan endTime, int slotDurationMinutes = 30)
+    {
+        _workingSchedules.Clear();
+        var workDays = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday };
+        foreach (var day in workDays)
+        {
+            _workingSchedules.Add(DoctorWorkingSchedule.Create(Id, day, startTime, endTime, slotDurationMinutes));
+        }
         UpdateModifiedTime();
     }
 }

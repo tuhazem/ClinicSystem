@@ -34,5 +34,10 @@ public class DoctorConfiguration : IEntityTypeConfiguration<Doctor>
         builder.Property(d => d.ConsultationFee)
             .HasPrecision(18, 2)
             .IsRequired();
+
+        builder.HasMany(d => d.WorkingSchedules)
+            .WithOne()
+            .HasForeignKey(s => s.DoctorId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

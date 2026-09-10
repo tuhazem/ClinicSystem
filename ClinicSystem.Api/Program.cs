@@ -2,7 +2,11 @@ using ClinicSystem.Api.Middlewares;
 using ClinicSystem.Application;
 using ClinicSystem.Infrastructure;
 using ClinicSystem.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +18,36 @@ builder.Services.AddProblemDetails();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
-// 3. Multi-tier Caching: .NET 9 HybridCache (L1 Memory + L2 Redis backing)
+// 3. JWT Bearer Authentication
+var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "SuperSecretKeyForClinicManagementSystemEnterprise2026!#*";
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "ClinicSystem";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "ClinicSystemUsers";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+builder.Services.AddAuthorization();
+
+// 4. Multi-tier Caching: .NET 9 HybridCache (L1 Memory + L2 Redis backing)
 #pragma warning disable EXTEXP0018
 builder.Services.AddHybridCache(options =>
 {
@@ -26,19 +59,52 @@ builder.Services.AddHybridCache(options =>
 });
 #pragma warning restore EXTEXP0018
 
-// 4. OpenAPI 3.0 Document Generation
-builder.Services.AddOpenApi();
+// 5. OpenAPI 3.0 Document Generation with JWT Bearer Security Scheme
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Info.Title = "Clinic System Enterprise API";
+        document.Info.Version = "v1";
+        document.Info.Description = "Enterprise Clinic Management System API with JWT Authentication, HybridCache, Slot Engine, and Automated PDF Generation.";
+
+        var securityScheme = new OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+            Description = "Enter JWT Bearer token format: Bearer {token}",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Reference = new OpenApiReference
+            {
+                Type = ReferenceType.SecurityScheme,
+                Id = "Bearer"
+            }
+        };
+
+        document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes.Add("Bearer", securityScheme);
+
+        document.SecurityRequirements.Add(new OpenApiSecurityRequirement
+        {
+            { securityScheme, Array.Empty<string>() }
+        });
+
+        return Task.CompletedTask;
+    });
+});
 
 var app = builder.Build();
 
-// 5. Automatic Database Migration & Demo Data Seeding
+// 6. Automatic Database Migration & Demo Data Seeding
 await DatabaseSeeder.SeedAsync(app.Services);
 
-// 6. Custom Enterprise Middleware Pipeline
+// 7. Custom Enterprise Middleware Pipeline
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-// 7. Interactive API Documentation
+// 8. Interactive API Documentation
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -55,8 +121,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
+
+public partial class Program { }

@@ -34,4 +34,16 @@ public class ConsultationsController : ApiController
         var consultationId = await Mediator.Send(command, cancellationToken);
         return StatusCode(StatusCodes.Status201Created, new { consultationId });
     }
+
+    /// <summary>
+    /// Downloads or streams an official printable PDF prescription with doctor signature and medical recommendations.
+    /// </summary>
+    [HttpGet("{id:guid}/pdf")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPrescriptionPdf(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(new ClinicSystem.Application.MedicalRecords.Queries.GetPrescriptionPdf.GetPrescriptionPdfQuery(id), cancellationToken);
+        return File(result.Content, result.ContentType, result.FileName);
+    }
 }

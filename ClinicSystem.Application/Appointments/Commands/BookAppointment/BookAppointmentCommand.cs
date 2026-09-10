@@ -38,6 +38,18 @@ public class BookAppointmentCommandHandler(IAppointmentRepository appointmentRep
 {
     public async Task<Guid> Handle(BookAppointmentCommand request, CancellationToken cancellationToken)
     {
+        var hasConflict = await appointmentRepository.HasConflictAsync(
+            request.DoctorId,
+            request.ScheduledStartTimeUtc,
+            request.ScheduledEndTimeUtc,
+            null,
+            cancellationToken);
+
+        if (hasConflict)
+        {
+            throw new InvalidOperationException("The requested doctor already has a booked appointment during this time window.");
+        }
+
         var nextQueueNumber = await appointmentRepository.GetNextQueueNumberAsync(
             request.DoctorId,
             request.ScheduledStartTimeUtc,

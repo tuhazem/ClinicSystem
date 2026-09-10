@@ -20,7 +20,9 @@ public class DoctorRepository : IDoctorRepository
 
     public async Task<Doctor?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _context.Doctors.FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+        return await _context.Doctors
+            .Include(d => d.WorkingSchedules)
+            .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
     }
 
     public async Task<IReadOnlyList<Doctor>> GetAllAsync(bool activeOnly = true, CancellationToken cancellationToken = default)

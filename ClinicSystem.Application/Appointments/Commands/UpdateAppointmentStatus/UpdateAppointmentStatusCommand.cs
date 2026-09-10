@@ -1,6 +1,7 @@
 using ClinicSystem.Application.Common.Caching;
 using ClinicSystem.Application.Common.Interfaces;
 using ClinicSystem.Domain.Appointments;
+using FluentValidation;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,15 @@ public record UpdateAppointmentStatusCommand(
 ) : IRequest<bool>, ICacheInvalidator
 {
     public IReadOnlyCollection<string>? CacheTagsToInvalidate => ["appointments"];
+}
+
+public class UpdateAppointmentStatusCommandValidator : AbstractValidator<UpdateAppointmentStatusCommand>
+{
+    public UpdateAppointmentStatusCommandValidator()
+    {
+        RuleFor(x => x.AppointmentId).NotEmpty().WithMessage("Appointment ID is required.");
+        RuleFor(x => x.NewStatus).IsInEnum().WithMessage("A valid appointment status is required.");
+    }
 }
 
 public class UpdateAppointmentStatusCommandHandler(IAppointmentRepository appointmentRepository)

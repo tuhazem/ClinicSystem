@@ -1,7 +1,59 @@
 @ClinicSystem.Api_HostAddress = https://localhost:7198
 
 ### ===================================================
-### 1. PATIENTS MODULE
+### 0. AUTHENTICATION & SECURITY (JWT + RBAC)
+### ===================================================
+
+### Login as Admin
+# @name adminLogin
+POST {{ClinicSystem.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "admin",
+  "password": "Admin@123"
+}
+
+### Store token from response
+@authToken = {{adminLogin.response.body.accessToken}}
+
+### Login as Doctor
+POST {{ClinicSystem.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "usernameOrEmail": "dr.house",
+  "password": "Doctor@123"
+}
+
+### Get Current User Profile
+GET {{ClinicSystem.Api_HostAddress}}/api/auth/me
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### Register New Staff/User
+POST {{ClinicSystem.Api_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "nurse.joy",
+  "email": "joy@clinic.com",
+  "password": "Password123!",
+  "role": "Receptionist"
+}
+
+
+### ===================================================
+### 1. REAL-TIME CLINIC ANALYTICS & DASHBOARD
+### ===================================================
+
+### Get Real-Time Dashboard Summary (Appointments, Revenue, Queues, Top Services)
+GET {{ClinicSystem.Api_HostAddress}}/api/dashboard/summary
+Accept: application/json
+
+
+### ===================================================
+### 2. PATIENTS MODULE
 ### ===================================================
 
 ### Register Patient
@@ -23,7 +75,7 @@ Accept: application/json
 
 
 ### ===================================================
-### 2. DOCTORS MODULE
+### 3. DOCTORS MODULE & SLOT ENGINE
 ### ===================================================
 
 ### Register Doctor
@@ -48,12 +100,16 @@ Accept: application/json
 GET {{ClinicSystem.Api_HostAddress}}/api/doctors/{{doctorId}}
 Accept: application/json
 
+### Get Doctor Available Slots (Conflict-Free Slot Engine)
+GET {{ClinicSystem.Api_HostAddress}}/api/appointments/doctor/{{doctorId}}/available-slots?date=2026-09-15
+Accept: application/json
+
 
 ### ===================================================
-### 3. APPOINTMENTS & QUEUE MANAGEMENT
+### 4. APPOINTMENTS & QUEUE MANAGEMENT
 ### ===================================================
 
-### Book Appointment (Auto Queue Number Assignment)
+### Book Appointment (Auto Queue Number & Conflict Prevention)
 POST {{ClinicSystem.Api_HostAddress}}/api/appointments/book
 Content-Type: application/json
 
@@ -82,7 +138,7 @@ Content-Type: application/json
 
 
 ### ===================================================
-### 4. MEDICAL SERVICES & PROCEDURES
+### 5. MEDICAL SERVICES & PROCEDURES
 ### ===================================================
 
 ### Create Medical Service
@@ -103,7 +159,7 @@ Accept: application/json
 
 
 ### ===================================================
-### 5. BILLING & INVOICES
+### 6. BILLING & INVOICES (PDF GENERATION)
 ### ===================================================
 
 ### Create Patient Invoice
@@ -141,9 +197,13 @@ Content-Type: application/json
   "paymentMethod": 2
 }
 
+### Download Official Invoice PDF Receipt (QuestPDF Engine)
+GET {{ClinicSystem.Api_HostAddress}}/api/invoices/{{invoiceId}}/pdf
+Accept: application/pdf
+
 
 ### ===================================================
-### 6. ELECTRONIC MEDICAL RECORDS & PRESCRIPTIONS
+### 7. ELECTRONIC MEDICAL RECORDS & PRESCRIPTIONS (PDF)
 ### ===================================================
 
 ### Record Consultation & Prescriptions
@@ -179,3 +239,8 @@ Content-Type: application/json
 ### Get Patient Medical Records & Prescriptions (Cached via HybridCache)
 GET {{ClinicSystem.Api_HostAddress}}/api/consultations/patient/{{patientId}}
 Accept: application/json
+
+### Download Printable Prescription PDF (QuestPDF Engine)
+@consultationId = 00000000-0000-0000-0000-000000000000
+GET {{ClinicSystem.Api_HostAddress}}/api/consultations/{{consultationId}}/pdf
+Accept: application/pdf

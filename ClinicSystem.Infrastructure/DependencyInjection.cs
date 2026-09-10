@@ -47,6 +47,15 @@ public static class DependencyInjection
         services.AddScoped<IInvoiceRepository, InvoiceRepository>();
         services.AddScoped<IConsultationRepository, ConsultationRepository>();
 
+        // 4. Analytics & Document Reporting Services
+        services.AddScoped<IClinicAnalyticsService, ClinicSystem.Infrastructure.Services.ClinicAnalyticsService>();
+        services.AddScoped<IPdfReportService, ClinicSystem.Infrastructure.Services.PdfReportService>();
+
+        // 5. Authentication & Security Services
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddSingleton<IPasswordHasher, ClinicSystem.Infrastructure.Services.PasswordHasher>();
+        services.AddSingleton<IJwtTokenGenerator, ClinicSystem.Infrastructure.Services.JwtTokenGenerator>();
+
         return services;
     }
 
