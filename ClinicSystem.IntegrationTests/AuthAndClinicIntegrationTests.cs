@@ -30,6 +30,32 @@ public class AuthAndClinicIntegrationTests : IClassFixture<CustomWebApplicationF
         _client = factory.CreateClient();
     }
 
+    private async Task<HttpClient> GetAuthenticatedClientAsync(string role = "Admin")
+    {
+        var username = $"test_{role.ToLower()}_{Guid.NewGuid():N}"[..12];
+        var regCommand = new RegisterUserCommand(
+            Username: username,
+            Email: $"{username}@test.com",
+            Password: "Password123!",
+            Role: role
+        );
+
+        var regResponse = await _client.PostAsJsonAsync("/api/auth/register", regCommand);
+        regResponse.EnsureSuccessStatusCode();
+        var regResult = await regResponse.Content.ReadFromJsonAsync<AuthResponseDto>();
+
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", regResult!.AccessToken);
+        return client;
+    }
+
+    [Fact]
+    public async Task UnauthenticatedAccess_ToSecuredEndpoint_ShouldReturn401Unauthorized()
+    {
+        var response = await _client.GetAsync("/api/dashboard/summary");
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
     [Fact]
     public async Task AuthFlow_RegisterAndLogin_ShouldReturnValidJwtToken()
     {
@@ -70,7 +96,8 @@ public class AuthAndClinicIntegrationTests : IClassFixture<CustomWebApplicationF
     [Fact]
     public async Task DashboardSummary_ShouldReturnSummaryStatistics()
     {
-        var response = await _client.GetAsync("/api/dashboard/summary");
+        var client = await GetAuthenticatedClientAsync("Admin");
+        var response = await client.GetAsync("/api/dashboard/summary");
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var summary = await response.Content.ReadFromJsonAsync<DashboardSummaryDto>();
@@ -82,8 +109,9 @@ public class AuthAndClinicIntegrationTests : IClassFixture<CustomWebApplicationF
     [Fact]
     public async Task AvailableSlots_ShouldReturnSlotsForDoctor()
     {
+        var client = await GetAuthenticatedClientAsync("Receptionist");
         // Fetch seeded doctors
-        var doctorsResponse = await _client.GetAsync("/api/doctors");
+        var doctorsResponse = await client.GetAsync("/api/doctors");
         doctorsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var doctors = await doctorsResponse.Content.ReadFromJsonAsync<List<DoctorDto>>();
@@ -92,7 +120,7 @@ public class AuthAndClinicIntegrationTests : IClassFixture<CustomWebApplicationF
         var doctorId = doctors![0].Id;
         var date = DateTime.UtcNow.AddDays(7).ToString("yyyy-MM-dd");
 
-        var slotsResponse = await _client.GetAsync($"/api/appointments/doctor/{doctorId}/available-slots?date={date}");
+        var slotsResponse = await client.GetAsync($"/api/appointments/doctor/{doctorId}/available-slots?date={date}");
         slotsResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var slots = await slotsResponse.Content.ReadFromJsonAsync<List<AvailableSlotDto>>();
@@ -102,6 +130,7 @@ public class AuthAndClinicIntegrationTests : IClassFixture<CustomWebApplicationF
     [Fact]
     public async Task InvoicePdfDownload_ShouldReturnValidPdfStream()
     {
+        var client = await GetAuthenticatedClientAsync("Cashier");
         // Obtain seeded invoice ID
         using var scope = _factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -109,7 +138,7 @@ public class AuthAndClinicIntegrationTests : IClassFixture<CustomWebApplicationF
 
         if (invoice != null)
         {
-            var pdfResponse = await _client.GetAsync($"/api/invoices/{invoice.Id}/pdf");
+            var pdfResponse = await client.GetAsync($"/api/invoices/{invoice.Id}/pdf");
             pdfResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             pdfResponse.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
 
@@ -123,6 +152,7 @@ public class AuthAndClinicIntegrationTests : IClassFixture<CustomWebApplicationF
     [Fact]
     public async Task PrescriptionPdfDownload_ShouldReturnValidPdfStream()
     {
+        var client = await GetAuthenticatedClientAsync("Doctor");
         // Obtain seeded consultation record ID
         using var scope = _factory.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -130,7 +160,7 @@ public class AuthAndClinicIntegrationTests : IClassFixture<CustomWebApplicationF
 
         if (record != null)
         {
-            var pdfResponse = await _client.GetAsync($"/api/consultations/{record.Id}/pdf");
+            var pdfResponse = await client.GetAsync($"/api/consultations/{record.Id}/pdf");
             pdfResponse.StatusCode.Should().Be(HttpStatusCode.OK);
             pdfResponse.Content.Headers.ContentType!.MediaType.Should().Be("application/pdf");
 

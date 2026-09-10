@@ -1,5 +1,6 @@
 using ClinicSystem.Application.Analytics.Queries.GetClinicDashboardSummary;
 using ClinicSystem.Application.Common.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -8,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace ClinicSystem.Api.Controllers;
 
+[Authorize(Roles = "Admin,Doctor,Receptionist,Cashier")]
 public class DashboardController : ApiController
 {
     /// <summary>

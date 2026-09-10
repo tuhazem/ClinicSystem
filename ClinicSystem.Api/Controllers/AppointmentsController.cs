@@ -2,6 +2,7 @@ using ClinicSystem.Application.Appointments.Commands.BookAppointment;
 using ClinicSystem.Application.Appointments.Commands.UpdateAppointmentStatus;
 using ClinicSystem.Application.Appointments.Queries;
 using ClinicSystem.Application.Appointments.Queries.GetDoctorAppointments;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -11,12 +12,14 @@ using System.Threading.Tasks;
 
 namespace ClinicSystem.Api.Controllers;
 
+[Authorize]
 public class AppointmentsController : ApiController
 {
     /// <summary>
     /// Books a new appointment with queue number assignment and cache invalidation.
     /// </summary>
     [HttpPost("book")]
+    [Authorize(Roles = "Admin,Doctor,Receptionist,Patient")]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Book([FromBody] BookAppointmentCommand command, CancellationToken cancellationToken)
@@ -29,6 +32,7 @@ public class AppointmentsController : ApiController
     /// Retrieves a doctor's schedule and appointments for a given date (cached via HybridCache).
     /// </summary>
     [HttpGet("doctor/{doctorId:guid}")]
+    [Authorize(Roles = "Admin,Doctor,Receptionist,Patient")]
     [ProducesResponseType(typeof(IReadOnlyList<AppointmentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDoctorSchedule(Guid doctorId, [FromQuery] DateTime? date, CancellationToken cancellationToken)
     {
@@ -41,6 +45,7 @@ public class AppointmentsController : ApiController
     /// Retrieves available, non-overlapping booking slots for a doctor on a given date (cached via HybridCache).
     /// </summary>
     [HttpGet("doctor/{doctorId:guid}/available-slots")]
+    [Authorize(Roles = "Admin,Doctor,Receptionist,Patient")]
     [ProducesResponseType(typeof(IReadOnlyList<ClinicSystem.Application.Appointments.Queries.GetDoctorAvailableSlots.AvailableSlotDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAvailableSlots(Guid doctorId, [FromQuery] DateTime? date, CancellationToken cancellationToken)
@@ -54,6 +59,7 @@ public class AppointmentsController : ApiController
     /// Updates an appointment's status (Confirmed, InProgress, Completed, Cancelled).
     /// </summary>
     [HttpPatch("{id:guid}/status")]
+    [Authorize(Roles = "Admin,Doctor,Receptionist")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateAppointmentStatusRequest request, CancellationToken cancellationToken)

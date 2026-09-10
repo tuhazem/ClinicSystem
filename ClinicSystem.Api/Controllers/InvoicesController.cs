@@ -3,6 +3,7 @@ using ClinicSystem.Application.Billing.Commands.RecordPayment;
 using ClinicSystem.Application.Billing.Queries;
 using ClinicSystem.Application.Billing.Queries.GetPatientInvoices;
 using ClinicSystem.Domain.Billing;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -12,12 +13,14 @@ using System.Threading.Tasks;
 
 namespace ClinicSystem.Api.Controllers;
 
+[Authorize]
 public class InvoicesController : ApiController
 {
     /// <summary>
     /// Retrieves all invoices and billing records for a specific patient (cached via HybridCache).
     /// </summary>
     [HttpGet("patient/{patientId:guid}")]
+    [Authorize(Roles = "Admin,Cashier,Receptionist,Patient")]
     [ProducesResponseType(typeof(IReadOnlyList<InvoiceDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPatientInvoices(Guid patientId, CancellationToken cancellationToken)
     {
@@ -29,6 +32,7 @@ public class InvoicesController : ApiController
     /// Creates and issues a new patient invoice with line items.
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = "Admin,Cashier")]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateInvoiceCommand command, CancellationToken cancellationToken)
@@ -41,6 +45,7 @@ public class InvoicesController : ApiController
     /// Records a payment for an invoice (Cash, CreditCard, Insurance, BankTransfer).
     /// </summary>
     [HttpPost("{id:guid}/pay")]
+    [Authorize(Roles = "Admin,Cashier")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -55,6 +60,7 @@ public class InvoicesController : ApiController
     /// Downloads or streams an official printable PDF receipt/invoice.
     /// </summary>
     [HttpGet("{id:guid}/pdf")]
+    [Authorize(Roles = "Admin,Cashier,Receptionist,Patient")]
     [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetInvoicePdf(Guid id, CancellationToken cancellationToken)
