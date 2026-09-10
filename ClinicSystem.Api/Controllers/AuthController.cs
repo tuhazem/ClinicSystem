@@ -56,25 +56,26 @@ public class AuthController : ApiController
     /// </summary>
     [HttpGet("me")]
     [Authorize]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(UserProfileDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public IActionResult GetCurrentUser()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-        var username = User.FindFirstValue(ClaimTypes.Name) ?? User.FindFirstValue("unique_name");
-        var email = User.FindFirstValue(ClaimTypes.Email);
-        var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role");
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub") ?? string.Empty;
+        var username = User.FindFirstValue(ClaimTypes.Name) ?? User.FindFirstValue("unique_name") ?? string.Empty;
+        var email = User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue("email") ?? string.Empty;
+        var role = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role") ?? string.Empty;
         var doctorId = User.FindFirstValue("doctorId");
         var patientId = User.FindFirstValue("patientId");
 
-        return Ok(new
-        {
-            userId,
-            username,
-            email,
-            role,
-            doctorId,
-            patientId
-        });
+        return Ok(new UserProfileDto(userId, username, email, role, doctorId, patientId));
     }
 }
+
+public record UserProfileDto(
+    string UserId,
+    string Username,
+    string Email,
+    string Role,
+    string? DoctorId,
+    string? PatientId
+);
