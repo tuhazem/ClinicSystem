@@ -13,7 +13,7 @@
 [![Tests](https://img.shields.io/badge/Tests-22%20Passing%20(100%25)-success?style=for-the-badge&logo=githubactions&logoColor=white)](#-automated-testing)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-[Architecture](DOCUMENTATION.md) • [Interactive API Docs](https://localhost:7198/scalar/v1) • [API Guide](ClinicSystem.Api/ClinicSystem.Api.http) • [Getting Started](#-getting-started)
+[Architecture](DOCUMENTATION.md) • [API Guide & Reference](API_DOCUMENTATION.md) • [Interactive Scalar Docs](https://localhost:7198/scalar/v1) • [Getting Started](#-getting-started)
 
 </div>
 
