@@ -46,6 +46,20 @@ public class ExceptionHandlingMiddleware(
                         .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
                 }
             },
+            UnauthorizedAccessException authEx => new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.Unauthorized,
+                Title = "Unauthorized",
+                Detail = authEx.Message,
+                Type = "https://datatracker.ietf.org/doc/html/rfc7235#section-3.1"
+            },
+            KeyNotFoundException notFoundEx => new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.NotFound,
+                Title = "Not Found",
+                Detail = notFoundEx.Message,
+                Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.5.4"
+            },
             ArgumentException argEx => new ProblemDetails
             {
                 Status = (int)HttpStatusCode.BadRequest,

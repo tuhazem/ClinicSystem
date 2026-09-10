@@ -171,14 +171,22 @@ public static class DatabaseSeeder
                 );
                 consult.AddPrescription("Amoxicillin-Clavulanate 875mg", "1 tablet", "Twice daily after meals", 7, "Complete full antibiotic course.");
                 consult.AddPrescription("Fluticasone Nasal Spray 50mcg", "2 sprays/nostril", "Once daily in the morning", 14, "Use after clearing nasal passages.");
+                await context.ConsultationRecords.AddAsync(consult);
+                await context.SaveChangesAsync();
+            }
 
-                // 7. Seed Default Security Users
-                logger.LogInformation("Seeding Users...");
+            // 7. Seed Default Security Users (Independent check)
+            if (!await context.Users.AnyAsync())
+            {
+                logger.LogInformation("Seeding Security Users...");
+                var house = await context.Doctors.FirstOrDefaultAsync(d => d.LicenseNumber == "DOC-MD-001");
+                var patient1 = await context.Patients.FirstOrDefaultAsync(p => p.MedicalRecordNumber == "PAT-2026-0001");
+
                 var adminUser = ClinicSystem.Domain.Users.User.Create("admin", "admin@clinic.com", BCrypt.Net.BCrypt.HashPassword("Admin@123"), "Admin");
-                var houseUser = ClinicSystem.Domain.Users.User.Create("dr.house", "house@clinic.org", BCrypt.Net.BCrypt.HashPassword("Doctor@123"), "Doctor", associatedDoctorId: house.Id);
+                var houseUser = ClinicSystem.Domain.Users.User.Create("dr.house", "house@clinic.org", BCrypt.Net.BCrypt.HashPassword("Doctor@123"), "Doctor", associatedDoctorId: house?.Id);
                 var staffUser = ClinicSystem.Domain.Users.User.Create("receptionist", "staff@clinic.com", BCrypt.Net.BCrypt.HashPassword("Staff@123"), "Receptionist");
                 var cashierUser = ClinicSystem.Domain.Users.User.Create("cashier", "cashier@clinic.com", BCrypt.Net.BCrypt.HashPassword("Cashier@123"), "Cashier");
-                var patientUser = ClinicSystem.Domain.Users.User.Create("patient.jvance", "jvance@example.com", BCrypt.Net.BCrypt.HashPassword("Patient@123"), "Patient", associatedPatientId: patient1.Id);
+                var patientUser = ClinicSystem.Domain.Users.User.Create("patient.jvance", "jvance@example.com", BCrypt.Net.BCrypt.HashPassword("Patient@123"), "Patient", associatedPatientId: patient1?.Id);
 
                 await context.Users.AddRangeAsync(adminUser, houseUser, staffUser, cashierUser, patientUser);
                 await context.SaveChangesAsync();
