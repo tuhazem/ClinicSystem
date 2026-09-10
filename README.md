@@ -50,34 +50,34 @@
 
 ```mermaid
 flowchart TD
-    Client[Client / Frontend / Postman] -->|HTTP / JSON| API[ClinicSystem.Api]
+    Client["Client / Frontend / Postman"] -->|HTTP / JSON| API["ClinicSystem.Api"]
     
-    subgraph API Layer
-        API --> Middleware[Exception & Logging Middlewares]
-        Middleware --> Auth[JWT Bearer Authentication & RBAC]
-        Auth --> Controllers[API Controllers]
+    subgraph APILayer ["API Layer (ClinicSystem.Api)"]
+        API --> Middleware["Exception & Logging Middlewares"]
+        Middleware --> Auth["JWT Bearer Authentication & RBAC"]
+        Auth --> Controllers["API Controllers"]
     end
     
-    subgraph Application Layer [ClinicSystem.Application (CQRS)]
-        Controllers --> MediatR[MediatR Pipeline]
-        MediatR --> ValBehavior[ValidationBehavior (FluentValidation)]
-        ValBehavior --> CacheBehavior[CachingBehavior (.NET 9 HybridCache)]
-        CacheBehavior --> Handlers[Command / Query Handlers]
+    subgraph ApplicationLayer ["Application Layer (CQRS & Pipeline)"]
+        Controllers --> MediatR["MediatR Pipeline"]
+        MediatR --> ValBehavior["ValidationBehavior (FluentValidation)"]
+        ValBehavior --> CacheBehavior["CachingBehavior (.NET 9 HybridCache)"]
+        CacheBehavior --> Handlers["Command / Query Handlers"]
     end
     
-    subgraph Domain Layer [ClinicSystem.Domain]
-        Handlers --> Aggregates[Domain Aggregates & Entities]
-        Aggregates --> Appointments[Appointment & Shifts]
-        Aggregates --> Invoices[Invoice & Ledger]
-        Aggregates --> Records[Consultation & Rx]
-        Aggregates --> Users[User & Roles]
+    subgraph DomainLayer ["Domain Layer (Core Entities & Invariants)"]
+        Handlers --> Aggregates["Domain Aggregates & Entities"]
+        Aggregates --> Appointments["Appointment & Shifts"]
+        Aggregates --> Invoices["Invoice & Ledger"]
+        Aggregates --> Records["Consultation & Rx"]
+        Aggregates --> Users["User & Roles"]
     end
     
-    subgraph Infrastructure Layer [ClinicSystem.Infrastructure]
-        Handlers --> Repositories[EF Core 9 Repositories]
-        Repositories --> DB[(SQL Server / LocalDB)]
-        CacheBehavior --> Redis[(Redis L2 Cache)]
-        Handlers --> PDF[QuestPDF Generation Engine]
+    subgraph InfrastructureLayer ["Infrastructure Layer (External Integrations)"]
+        Handlers --> Repositories["EF Core 9 Repositories"]
+        Repositories --> DB[("SQL Server / LocalDB")]
+        CacheBehavior --> Redis[("Redis L2 Cache")]
+        Handlers --> PDF["QuestPDF Generation Engine"]
     end
 ```
 
